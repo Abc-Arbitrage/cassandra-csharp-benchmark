@@ -33,7 +33,7 @@ The code is meant to be as simple as possible but we still tried to make it as f
  - Read: 00:00:48.1708741 (1,868,348 point/s)
  
 # How to run it at home
- - Replace `<INSERT_YOUR_DC_HERE>` with your own DC name in `create_schema.cql` and run it
+ - Replace `<INSERT_YOUR_DC_HERE>` with your own DC name in [create_schema.cql](https://github.com/Abc-Arbitrage/cassandra-csharp-benchmark/blob/master/create_schema.cql) and run it
  - Change `<INSERT_YOUR_CONTACT_HOST_HERE>` and `<INSERT_YOUR_DC_HERE>` in Program.cs
  - Compile & Run
  - Choose read/write/cleanup & wait
