@@ -1,5 +1,5 @@
 # About
-This benchmark is intended to provide an easy and repeatable way to measure the C# C* driver performance.
+This benchmark is intended to provide an easy and repeatable way to measure the C* drivers performance.
 The benchmark is inspired by a production use case where we persist time series (metrics) all the time and read them all once per day for statistics purposes.
 
 The code is meant to be simple but we still tried to make it as fast as possible, so any comment / improvement is welcome.
@@ -23,7 +23,8 @@ The code is meant to be simple but we still tried to make it as fast as possible
  - No paging
  - CL: Local_One
 
-# Benchmark results
+# Benchmark results 
+## C# Driver
 
 |        | Reads                        | Writes                    |
 |--------|------------------------------|---------------------------|
