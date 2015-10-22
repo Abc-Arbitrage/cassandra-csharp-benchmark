@@ -24,13 +24,11 @@ The code is meant to be as simple as possible but we still tried to make it as f
  - CL: Local_One
 
 # Benchmark results
-## CSharp driver v2.7.1
- - Write: 01:38:51.6152562 (15,172 point/s)
- - Read: 00:01:21.5452169 (1,103,682 point/s)
 
-## CSharp driver v2.7.2
- - Write: TODO
- - Read: 00:00:48.1708741 (1,868,348 point/s)
+|        | Reads                        | Writes                    |
+|--------|------------------------------|---------------------------|
+| v2.7.1 | 00:01:21 (1,103,682 point/s) | 01:38:51 (15,172 point/s) |
+| v2.7.2 | 00:00:48 (1,868,348 point/s) | TODO                      |
  
 # How to run it at home
  - Replace `<INSERT_YOUR_DC_HERE>` with your own DC name in [create_schema.cql](https://github.com/Abc-Arbitrage/cassandra-csharp-benchmark/blob/master/create_schema.cql) and run it
