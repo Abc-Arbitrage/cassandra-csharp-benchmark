@@ -29,7 +29,7 @@ The code is meant to be simple but we still tried to make it as fast as possible
 |        | Reads                        | Writes                    |
 |--------|------------------------------|---------------------------|
 | v2.7.1 | 00:01:21 (1,103,682 point/s) | 01:38:51 (15,172 point/s) |
-| v2.7.2 | 00:00:48 (1,868,348 point/s) | TODO                      |
+| v2.7.2 | 00:00:48 (1,868,348 point/s) | 01:23:56 (17,870 point/s) |
  
 # How to run it at home
  - Replace `<INSERT_YOUR_DC_HERE>` with your own DC name in [create_schema.cql](https://github.com/Abc-Arbitrage/cassandra-csharp-benchmark/blob/master/create_schema.cql) and run it
