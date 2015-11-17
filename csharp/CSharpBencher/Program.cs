@@ -15,7 +15,7 @@ namespace CSharpBencher
         
         // Write settings
         private const int _seriesToInsert = 5000;
-        private const int _writeParallelStatementsCount = 5000;
+        private const int _writeParallelStatementsCount = 1000;
         
         // Read settings
         private const int _readParallelStatementsCount = 300;
