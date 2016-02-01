@@ -1,12 +1,10 @@
-﻿using System;
+﻿using Cassandra;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Cassandra;
 
 namespace CSharpBencher
 {
@@ -16,14 +14,12 @@ namespace CSharpBencher
         private static PreparedStatement _insertPreparedStatement;
         private static ISession _session;
 
-        private static int _ttl = (int)TimeSpan.FromDays(8).TotalSeconds;
+        private static readonly int _ttl = (int)TimeSpan.FromDays(8).TotalSeconds;
         private readonly string[] _cassandraContactPoints;
         private readonly string _localDc;
-        private static Task[] _insertionWokerTasks;
-        private static SemaphoreSlim _queriesInFlightSemaphore;
-        private static SemaphoreSlim _queriesWaitingInLineSemaphore;
         private static long _totalPointsCount;
-        private static BufferBlock<IStatement> _insertionQueue;
+
+        private static ParallelPersistor _parallelPersistor;
 
         private Writer(string[] cassandraContactPoints, string localDc)
         {
@@ -63,19 +59,23 @@ namespace CSharpBencher
 
             var overallStopwatch = Stopwatch.StartNew();
 
-            StartInsertionTasks(workersCount, parallelStatementsCount, serieCount, pointsPerDay);
+            _parallelPersistor = new ParallelPersistor(_session, workersCount, parallelStatementsCount);
+            _parallelPersistor.Start();
 
 
             foreach (var data in generatedData)
             {
                 var boundStatement = _insertPreparedStatement.Bind(data.SerieId, data.Timestamp.Date, data.Timestamp, data.Value, _ttl)
                                                              .SetConsistencyLevel(ConsistencyLevel.LocalOne);
-                Insert(boundStatement);
+                _parallelPersistor.Insert(boundStatement).ContinueWith(t =>
+                {
+                    Interlocked.Increment(ref _totalPointsCount);
+                    if (_totalPointsCount % 50000 == 0)
+                        Console.WriteLine("Inserted {0} data points ({1} % of total)", _totalPointsCount.ToString("#,#", CultureInfo.GetCultureInfo("en-US")), (int)(_totalPointsCount / (serieCount * (double)pointsPerDay) * 100));
+                });
             }
             
-
-            _insertionQueue.Complete();
-            _insertionQueue.Completion.Wait();
+            _parallelPersistor.Dispose();
 
             Console.WriteLine("----------- Insertion complete, waiting for the last inserts -----------");
             while (_totalPointsCount < serieCount * (double)pointsPerDay)
@@ -140,48 +140,6 @@ namespace CSharpBencher
             if (_insertPreparedStatement != null)
                 return;
             _insertPreparedStatement = _session.Prepare(_insertStatement);
-        }
-        
-        private static void Insert(IStatement statement)
-        {
-            _queriesWaitingInLineSemaphore.Wait(); // Since the dataset does not fit in memory, we limit the pending queries count
-            _insertionQueue.Post(statement);
-        }
-
-        private static void StartInsertionTasks(int workersCount, int parallelStatementsCount, int serieCount, int pointsPerDay)
-        {
-            _insertionWokerTasks = new Task[workersCount];
-            _queriesInFlightSemaphore = new SemaphoreSlim(parallelStatementsCount);
-            _queriesWaitingInLineSemaphore = new SemaphoreSlim(parallelStatementsCount * 100);
-            _insertionQueue = new BufferBlock<IStatement>();
-            
-            for (var i = 0; i < workersCount; ++i)
-            {
-                var worker = i;
-                _insertionWokerTasks[i] = Task.Factory.StartNew(async () =>
-                {
-                    try
-                    {
-                        while (true)
-                        {
-                            var statementToInsert = await _insertionQueue.ReceiveAsync();
-
-                            await _queriesInFlightSemaphore.WaitAsync();
-                            await _session.ExecuteAsync(statementToInsert);
-                            Interlocked.Increment(ref _totalPointsCount);
-                            _queriesInFlightSemaphore.Release();
-                            _queriesWaitingInLineSemaphore.Release();
-                            
-                            if (_totalPointsCount % 50000 == 0)
-                                Console.WriteLine("Inserted {0} data points ({1} % of total) from {2}", _totalPointsCount.ToString("#,#", CultureInfo.GetCultureInfo("en-US")), (int)(_totalPointsCount / (serieCount * (double)pointsPerDay) * 100), worker);
-                        }
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        Console.WriteLine($"Worker {worker} exited properly");
-                    }
-                }, TaskCreationOptions.LongRunning);
-            }
         }
     }
 }
