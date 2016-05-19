@@ -15,7 +15,7 @@ namespace CSharpBencher
         private readonly BufferBlock<PendingInsert> _insertionQueue;
         private readonly Task[] _workerTasks;
         private static SemaphoreSlim _queriesWaitingInLineSemaphore;
-        private readonly SemaphoreSlim _queriesInFlightSemaphore;
+        private readonly int _maximumQueueSize;
         private bool _stopped;
 
         private class PendingInsert
@@ -24,14 +24,16 @@ namespace CSharpBencher
             public TaskCompletionSource<RowSet> Completion { get; set; }
         }
 
-        public ParallelPersistor(ISession session, int asyncWorkersCount, int maximumInFlightStatements)
+        public ParallelPersistor(ISession session, int asyncWorkersCount)
         {
             _session = session;
             _workerTasks = new Task[asyncWorkersCount];
-            _queriesWaitingInLineSemaphore = new SemaphoreSlim(maximumInFlightStatements * 100);
-            _queriesInFlightSemaphore = new SemaphoreSlim(maximumInFlightStatements);
+            _maximumQueueSize = asyncWorkersCount * 100;
+            _queriesWaitingInLineSemaphore = new SemaphoreSlim(_maximumQueueSize);
             _insertionQueue = new BufferBlock<PendingInsert>();
         }
+
+        public int QueueSize => _maximumQueueSize - _queriesWaitingInLineSemaphore.CurrentCount;
 
         public Task Insert(IStatement statement)
         {
@@ -53,7 +55,6 @@ namespace CSharpBencher
                         try
                         {
                             pendingInsert = await _insertionQueue.ReceiveAsync();
-                            await _queriesInFlightSemaphore.WaitAsync();
                             var rowSet = await _session.ExecuteAsync(pendingInsert.Statement);
 
                             pendingInsert.Completion.SetResult(rowSet);
@@ -70,7 +71,6 @@ namespace CSharpBencher
                         }
                         finally
                         {
-                            _queriesInFlightSemaphore.Release();
                             _queriesWaitingInLineSemaphore.Release();
                         }
                     }

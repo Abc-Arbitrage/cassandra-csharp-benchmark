@@ -50,7 +50,6 @@ namespace CSharpBencher
             PrepareStatementIfNeeded();
 
             const int pointsPerDay = 18000; // Average number of points per day taken from real data
-            const int workersCount = 64;
             var serieIdsToInsert = Enumerable.Range(0, serieCount).Select(i => Guid.NewGuid()).ToList();
             
             StoreSerieIds(serieIdsToInsert);
@@ -59,7 +58,7 @@ namespace CSharpBencher
 
             var overallStopwatch = Stopwatch.StartNew();
 
-            _parallelPersistor = new ParallelPersistor(_session, workersCount, parallelStatementsCount);
+            _parallelPersistor = new ParallelPersistor(_session, parallelStatementsCount);
             _parallelPersistor.Start();
 
 
