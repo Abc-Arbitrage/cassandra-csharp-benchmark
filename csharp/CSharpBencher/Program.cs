@@ -18,7 +18,7 @@ namespace CSharpBencher
         private const int _writeParallelStatementsCount = 1000;
         
         // Read settings
-        private const int _readParallelStatementsCount = 300;
+        private const int _readParallelStatementsCount = 30;
         private const int _readPageSize = int.MaxValue;
 
 

@@ -12,13 +12,13 @@ The code is meant to be simple but we still tried to make it as fast as possible
 
 ## Write settings
  - Prepared statements
- - 5,000 insert statements in parallel
+ - 1,000 insert statements in parallel
  - 5,000 time series with 18,000 data points each
  - CL: Local_One
 
 ## Read settings
  - Prepared statements
- - 300 read statements in parallel
+ - 30 read statements in parallel
  - Read all time series
  - No paging
  - CL: Local_One
@@ -26,11 +26,13 @@ The code is meant to be simple but we still tried to make it as fast as possible
 # Benchmark results 
 ## C# Driver
 
-|        | Reads                        | Writes                    |
-|--------|------------------------------|---------------------------|
-| v2.7.1 | 00:01:21 (1,103,682 point/s) | 01:38:51 (15,172 point/s) |
-| v2.7.2 | 00:00:48 (1,868,348 point/s) | 01:23:56 (17,870 point/s) |
- 
+|        | Reads                        | Writes                     |
+|--------|------------------------------|----------------------------|
+| v2.7.0 | 00:00:40 (2,207,774 point/s) | 00:42:22 (35,392 point/s)  |
+| v2.7.3 | 00:00:37 (2,394,778 point/s) | 00:45:03 (33,295 point/s)  |
+| v3.0.0 | 00:00:41 (2,151,642 point/s) | 00:09:05 (165,136 point/s) |
+| v3.0.8 | 00:00:37 (2,428,638 point/s) | 00:09:54 (151,308 point/s) |
+
 # How to run it at home
  - Replace `<INSERT_YOUR_DC_HERE>` with your own DC name in [create_schema.cql](https://github.com/Abc-Arbitrage/cassandra-csharp-benchmark/blob/master/create_schema.cql) and run it
  - Change `<INSERT_YOUR_CONTACT_HOST_HERE>` and `<INSERT_YOUR_DC_HERE>` in Program.cs
