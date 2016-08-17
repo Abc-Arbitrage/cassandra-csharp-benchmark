@@ -29,12 +29,12 @@ The code is meant to be simple but we still tried to make it as fast as possible
 
 ### Results
 
-|        | Reads                        | Writes                     |
-|--------|------------------------------|----------------------------|
-| v2.7.0 | 00:00:40 (2,207,774 point/s) | 00:42:22 (35,392 point/s)  |
-| v2.7.3 | 00:00:37 (2,394,778 point/s) | 00:45:03 (33,295 point/s)  |
-| v3.0.0 | 00:00:41 (2,151,642 point/s) | 00:09:05 (165,136 point/s) |
-| v3.0.8 | 00:00:37 (2,428,638 point/s) | 00:09:54 (151,308 point/s) |
+| Version | Reads                        | Writes                     |
+|:-------:|------------------------------|----------------------------|
+| v2.7.0  | 00:00:40 (2,207,774 point/s) | 00:42:22 (35,392 point/s)  |
+| v2.7.3  | 00:00:37 (2,394,778 point/s) | 00:45:03 (33,295 point/s)  |
+| v3.0.0  | 00:00:41 (2,151,642 point/s) | 00:09:05 (165,136 point/s) |
+| v3.0.8  | 00:00:37 (2,428,638 point/s) | 00:09:54 (151,308 point/s) |
 
 ## Go Driver
 This is just a simple writer that mimics the C# benchmark and can probably be improved a lot.
@@ -44,8 +44,8 @@ This is just a simple writer that mimics the C# benchmark and can probably be im
 
 ### Results
 
-|                                                       | Reads                        | Writes                     |
-|-------------------------------------------------------|------------------------------|----------------------------|
+|             Version                                   | Reads                        | Writes                     |
+|:-----------------------------------------------------:|------------------------------|----------------------------|
 | b2caded3d0f457e42515c06d4092c02055cebaa0 (2016-07-29) |            TODO              | 00:10:26 (143,766 point/s) |
 
 
