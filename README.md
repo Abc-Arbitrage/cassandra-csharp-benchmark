@@ -46,7 +46,7 @@ This is just a simple writer that mimics the C# benchmark and can probably be im
 
 |             Version                                   | Reads                        | Writes                     |
 |:-----------------------------------------------------:|------------------------------|----------------------------|
-| b2caded3d0f457e42515c06d4092c02055cebaa0 (2016-07-29) |            TODO              | 00:10:26 (143,766 point/s) |
+| [b2caded3d0f457e42515c06d4092c02055cebaa0](https://github.com/gocql/gocql/commit/b2caded3d0f457e42515c06d4092c02055cebaa0) (2016-07-29) |            TODO              | 00:10:26 (143,766 point/s) |
 
 
 # How to run it at home
