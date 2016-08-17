@@ -8,7 +8,7 @@ The code is meant to be simple but we still tried to make it as fast as possible
 # Benchmark settings
 ## Cluster
  - 12 nodes with SSD / 32Gb RAM / Xeon (4 cores + HT / 8M @ 3.4GHz)
- - Cassandra 2.0.15
+ - Cassandra 2.1.12
 
 ## Write settings
  - Prepared statements
