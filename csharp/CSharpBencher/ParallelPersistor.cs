@@ -47,34 +47,36 @@ namespace CSharpBencher
         {
             for (var i = 0; i < _workerTasks.Length; ++i)
             {
-                _workerTasks[i] = Task.Factory.StartNew(async () =>
-                {
-                    while (true)
-                    {
-                        PendingInsert pendingInsert = null;
-                        try
-                        {
-                            pendingInsert = await _insertionQueue.ReceiveAsync();
-                            var rowSet = await _session.ExecuteAsync(pendingInsert.Statement);
+                _workerTasks[i] = WorkerLoopAsync();
+            }
+        }
 
-                            pendingInsert.Completion.SetResult(rowSet);
-                        }
-                        catch (InvalidOperationException) // thrown by BufferBlock when stopping
-                        {
-                            _log.Info("Received stop signal");
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.Error(ex);
-                            pendingInsert?.Completion.SetException(ex);
-                        }
-                        finally
-                        {
-                            _queriesWaitingInLineSemaphore.Release();
-                        }
-                    }
-                }, TaskCreationOptions.LongRunning).Unwrap();
+        private async Task WorkerLoopAsync()
+        {
+            while (true)
+            {
+                PendingInsert pendingInsert = null;
+                try
+                {
+                    pendingInsert = await _insertionQueue.ReceiveAsync();
+                    var rowSet = await _session.ExecuteAsync(pendingInsert.Statement);
+
+                    pendingInsert.Completion.SetResult(rowSet);
+                }
+                catch (InvalidOperationException) // thrown by BufferBlock when stopping
+                {
+                    _log.Info("Received stop signal");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex);
+                    pendingInsert?.Completion.SetException(ex);
+                }
+                finally
+                {
+                    _queriesWaitingInLineSemaphore.Release();
+                }
             }
         }
 
