@@ -58,8 +58,8 @@ namespace CSharpBencher
                 PendingInsert pendingInsert = null;
                 try
                 {
-                    pendingInsert = await _insertionQueue.ReceiveAsync();
-                    var rowSet = await _session.ExecuteAsync(pendingInsert.Statement);
+                    pendingInsert = await _insertionQueue.ReceiveAsync().ConfigureAwait(false);
+                    var rowSet = await _session.ExecuteAsync(pendingInsert.Statement).ConfigureAwait(false);
 
                     pendingInsert.Completion.SetResult(rowSet);
                 }
