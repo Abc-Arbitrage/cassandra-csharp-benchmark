@@ -38,7 +38,7 @@ namespace CSharpBencher
         public Task Insert(IStatement statement)
         {
             _queriesWaitingInLineSemaphore.Wait(); // Since the dataset does not fit in memory, we limit the pending queries count
-            var taskCompletionSource = new TaskCompletionSource<RowSet>();
+            var taskCompletionSource = new TaskCompletionSource<RowSet>(TaskCreationOptions.RunContinuationsAsynchronously);
             _insertionQueue.Post(new PendingInsert { Statement = statement, Completion = taskCompletionSource });
             return taskCompletionSource.Task;
         }
