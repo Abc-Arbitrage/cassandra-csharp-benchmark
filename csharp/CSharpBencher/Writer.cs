@@ -10,16 +10,9 @@ namespace CSharpBencher
 {
     public class Writer
     {
-        private const string _insertStatement = @"INSERT INTO ""Timeserie"" (""SerieId"", ""Day"", ""UtcDate"", ""Value"") VALUES (?, ?, ?, ?) USING TTL ?;";
-        private static PreparedStatement _insertPreparedStatement;
-        private static ISession _session;
-
-        private static readonly int _ttl = (int)TimeSpan.FromDays(8).TotalSeconds;
         private readonly string[] _cassandraContactPoints;
         private readonly string _localDc;
-        private static long _totalPointsCount;
-
-        private static ParallelPersistor _parallelPersistor;
+        private ISession _session;
 
         private Writer(string[] cassandraContactPoints, string localDc)
         {
@@ -45,9 +38,9 @@ namespace CSharpBencher
                               .Connect();
         }
 
-        public void Write(int serieCount, int parallelStatementsCount)
+        public void Write(int serieCount, IPersistorStrategy persistorStrategy)
         {
-            PrepareStatementIfNeeded();
+            persistorStrategy.Prepare(_session);
 
             const int pointsPerDay = 18000; // Average number of points per day taken from real data
             var serieIdsToInsert = Enumerable.Range(0, serieCount).Select(i => Guid.NewGuid()).ToList();
@@ -58,34 +51,20 @@ namespace CSharpBencher
 
             var overallStopwatch = Stopwatch.StartNew();
 
-            _parallelPersistor = new ParallelPersistor(_session, parallelStatementsCount);
-            _parallelPersistor.Start();
+            var totalPointCount = serieCount * pointsPerDay;
 
-
-            foreach (var data in generatedData)
-            {
-                var boundStatement = _insertPreparedStatement.Bind(data.SerieId, data.Timestamp.Date, data.Timestamp, data.Value, _ttl)
-                                                             .SetConsistencyLevel(ConsistencyLevel.LocalOne);
-                _parallelPersistor.Insert(boundStatement).ContinueWith(t =>
-                {
-                    Interlocked.Increment(ref _totalPointsCount);
-                    if (_totalPointsCount % 50000 == 0)
-                        Console.WriteLine("Inserted {0} data points ({1} % of total)", _totalPointsCount.ToString("#,#", CultureInfo.GetCultureInfo("en-US")), (int)(_totalPointsCount / (serieCount * (double)pointsPerDay) * 100));
-                });
-            }
-            
-            _parallelPersistor.Dispose();
+            persistorStrategy.Run(_session, generatedData, totalPointCount);
 
             Console.WriteLine("----------- Insertion complete, waiting for the last inserts -----------");
-            while (_totalPointsCount < serieCount * (double)pointsPerDay)
+            
+            while (persistorStrategy.PersistedPointCount < totalPointCount)
                 Thread.Sleep(100);
 
             overallStopwatch.Stop();
 
-            Console.WriteLine("Insertion complete, {0} data points in {1} ({2} point/s)",
-                              _totalPointsCount.ToString("#,#", CultureInfo.GetCultureInfo("en-US")),
-                              overallStopwatch.Elapsed,
-                              ((int)(_totalPointsCount / overallStopwatch.Elapsed.TotalSeconds)).ToString("#,#", CultureInfo.GetCultureInfo("en-US")));
+            Console.WriteLine(FormattableString.Invariant($"Insertion complete, {totalPointCount:#,#} data points in {overallStopwatch.Elapsed} ({(int)(totalPointCount / overallStopwatch.Elapsed.TotalSeconds):#,#} point/s)"));
+
+            persistorStrategy.Cleanup();
         }
 
         private void StoreSerieIds(List<Guid> serieIdsToInsert)
@@ -94,20 +73,6 @@ namespace CSharpBencher
             var preparedInsertStatement = _session.Prepare(insertIdsStatement);
             foreach (var serieId in serieIdsToInsert)
                 _session.Execute(preparedInsertStatement.Bind(serieId));
-        }
-
-        private struct DataToInsert
-        {
-            public Guid SerieId;
-            public DateTime Timestamp;
-            public double Value;
-
-            public DataToInsert(Guid serieId, DateTime timestamp, double value)
-            {
-                SerieId = serieId;
-                Timestamp = timestamp;
-                Value = value;
-            }
         }
 
         private static IEnumerable<DataToInsert> GenerateDataToInsert(List<Guid> serieIdsToInsert, int pointsPerDay)
@@ -132,13 +97,6 @@ namespace CSharpBencher
             for (var i = 0; i < count; i++)
                 result.Add(random.NextDouble());
             return result;
-        }
-
-        private static void PrepareStatementIfNeeded()
-        {
-            if (_insertPreparedStatement != null)
-                return;
-            _insertPreparedStatement = _session.Prepare(_insertStatement);
         }
     }
 }

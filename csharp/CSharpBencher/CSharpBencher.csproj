@@ -60,11 +60,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataToInsert.cs" />
+    <Compile Include="IPersistorStrategy.cs" />
     <Compile Include="ParallelPersistor.cs" />
+    <Compile Include="ParallelPersistorStrategy.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ExtensionUtils.cs" />
+    <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="Reader.cs" />
+    <Compile Include="SemaphorePersistorStrategy.cs" />
     <Compile Include="Writer.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -70,7 +70,9 @@ namespace CSharpBencher
                                                  .ContinueWith(t => Interlocked.Add(ref totalPointsCount, t.Result.Select(row => row.GetValue<double>(1)).Count())));
                     ++readSeriesCount;
                 }
-                aggregationTasks.WaitAll();
+
+                Task.WaitAll(aggregationTasks.ToArray());
+
                 Console.WriteLine("Read {0} series in {1}", readSeriesCount, batchStopwatch.Elapsed);
             }
             overallStopwatch.Stop();

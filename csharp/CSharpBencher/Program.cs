@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cassandra;
 
 namespace CSharpBencher
@@ -14,17 +10,20 @@ namespace CSharpBencher
         private const string _localDataCenter = "<INSERT_YOUR_DC_HERE>";
         
         // Write settings
-        private const int _seriesToInsert = 5000;
-        private const int _writeParallelStatementsCount = 1000;
+        private const int _seriesToInsert = 100;
+        private const int _writeParallelStatementsCount = 64;
         
         // Read settings
         private const int _readParallelStatementsCount = 30;
         private const int _readPageSize = int.MaxValue;
 
-
         static void Main()
         {
-            Console.WriteLine("Press \"r\" for read benchmark, \"w\" for write, \"c\" for cleanup");
+            Console.WriteLine("Press:");
+            Console.WriteLine("-\"r\" for read benchmark");
+            Console.WriteLine("-\"w\" for write (ParallelPersistor)");
+            Console.WriteLine("-\"x\" for write (SemaphorePersistor)");
+            Console.WriteLine("-\"c\" for cleanup");
 
             var readKey = Console.ReadKey().KeyChar;
             Console.WriteLine();
@@ -42,12 +41,15 @@ namespace CSharpBencher
                     break;
                 case 'w':
                     Console.WriteLine($"Starting write benchmark with {_seriesToInsert} series, sending {_writeParallelStatementsCount} statements in parallel, on DC {_localDataCenter}");
-                    var writer = Writer.CreateAndConnect(_contactPoints, _localDataCenter);
-                    writer.Write(_seriesToInsert, _writeParallelStatementsCount);
+                    var writer1 = Writer.CreateAndConnect(_contactPoints, _localDataCenter);
+                    writer1.Write(_seriesToInsert, new ParallelPersistorStrategy(_writeParallelStatementsCount));
+                    break;
+                case 'x':
+                    Console.WriteLine($"Starting write benchmark with {_seriesToInsert} series, sending {_writeParallelStatementsCount} statements in parallel, on DC {_localDataCenter}");
+                    var writer2 = Writer.CreateAndConnect(_contactPoints, _localDataCenter);
+                    writer2.Write(_seriesToInsert, new SemaphorePersistorStrategy(_writeParallelStatementsCount));
                     break;
             }
-            
-            Console.Read();
         }
 
         private static void TruncateTables(string[] cassandraContactPoints, string localDc)
